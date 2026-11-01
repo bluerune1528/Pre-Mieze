@@ -1,0 +1,5 @@
+# pre-mieze
+
+Warm-up projects before Mieze.
+
+- MP1: HTTP client (in progress)
