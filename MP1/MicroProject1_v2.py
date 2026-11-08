@@ -1,35 +1,39 @@
-url = "https://openrouter.ai/api/v1/models"
 import requests
+url = "https://openrouter.ai/api/v1/models"
+
+class FetchError(Exception):                        # custom exception
+    pass    # do nothing for now/placeholder
+
+def fetch_json(url):
+    try:
+        response = requests.get(url, timeout=5)
+    except requests.exceptions.Timeout as err:
+        raise FetchError("timed out") from err
+    except requests.exceptions.RequestException as err:
+        raise FetchError(f"network problem: {err}") from err
+
+    if response.status_code >=400:
+        raise FetchError(f"Request failed: {response.status_code}")
+    return response.json()
+
 try:
-    response = requests.get(url, timeout=5)
-except requests.exceptions.Timeout:     # if we use just 'except:' that catches all errors. this catches timeouts only
-    print("request timed out")
-except requests.exceptions.RequestException as err:    # general except (goes last).. catches Timeout, ConnectionError, & HTTPError
-    print("network problem:", err)
+    rdict = fetch_json(url)
+except FetchError as err:
+    print("Giving up:", err)
 else:
-    if(response.status_code>=400):
-        print("Request failed:", response.status_code)
-    else:
-        print("Request successful:", response.status_code)
-        print("\n")
-        rdict = response.json()
-        rdictdata = rdict["data"]
-        for n in rdictdata[:3]:
-            print (f"Name: {n['name']}")
-        print("Total count: ")
-        print(rdict["total_count"])
+    print("Request successful")
+    print("\n")
+    rdictdata = rdict["data"]
+    for n in rdictdata[:3]:
+        print(f"Name: {n['name']}")
+    print("Total count: ")
+    print(rdict["total_count"])
 
 
 # print(rdict)
-# print("\n")
 # print(rdict.keys())
 # print(rdict["data"])
 # print(type(rdict["data"]))  # it's a list
 # print(rdict["data"][0])         # 1st model
 # print(type(rdict["data"][0]))   # dict
 # print(rdict["data"][0]["name"]) # prints name of 1st model
-
-# response2 = requests.get("https://openrouter.ai/api/v1/m")  # deliberately request a bad url
-# print("\n")
-# if(response2.status_code>=400):
-#    print("Request failed:", response2.status_code)
