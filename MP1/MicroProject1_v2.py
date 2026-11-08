@@ -7,13 +7,13 @@ class FetchError(Exception):                        # custom exception
 def fetch_json(url):
     try:
         response = requests.get(url, timeout=5)
+        response.raise_for_status()             # 4xx, 5xx -> HTTPError
     except requests.exceptions.Timeout as err:
         raise FetchError("timed out") from err
+    except requests.exceptions.HTTPError as err:
+        raise FetchError(f"Request failed: {err.response.status_code}") from err
     except requests.exceptions.RequestException as err:
         raise FetchError(f"network problem: {err}") from err
-
-    if response.status_code >=400:
-        raise FetchError(f"Request failed: {response.status_code}")
     return response.json()
 
 try:
