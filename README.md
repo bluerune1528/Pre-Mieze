@@ -16,5 +16,3 @@ Format: `type: short description`
 | `refactor` | restructure code, same behavior |
 | `test` | add or change tests |
 | `chore` | setup, `.gitignore`, housekeeping |
-
-Examples: `feat: add extract_models`, `fix: catch RequestException`, `docs: update MP1 status`
