@@ -4,8 +4,8 @@ url = "https://openrouter.ai/api/v1/models"
 TIMEOUT = (3.05, 10)                            # (connect, read) in seconds
 SNAPSHOT_FILE = "seen_models.json"
 
-class FetchError(Exception):                        # custom exception
-    pass    # do nothing for now/placeholder
+class FetchError(Exception):                        # custom exception (Exception is a built in class, FetchError inherits its functionality)
+    pass    # do nothing for now/placeholder (not adding anything extra to the class)
 
 def fetch_json(url):
     try:
@@ -32,9 +32,16 @@ def extract_models(payload):        # extract imp info from payload (saves nav t
         if isinstance(m, dict) and 'id' in m        # for each model m in the list, if it's a dict & has an id, add id:name to the new dict
     }
 
-# def load_snapshot(path=SNAPSHOT_FILE):                  # path is a default param
-#    try:
-#        with open(path, encoding="utf-8") as f:             # with is a context manager (closes file automatically) & opened file is assigned to var f
+def load_snapshot(path=SNAPSHOT_FILE):                  # path is a default param
+    try:
+        with open(path, encoding="utf-8") as f:             # with is a context manager (closes file automatically) & opened file is assigned to var f
+            return json.load(f)     # reads file
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}           # first run or corrupted file
+
+def save_snapshot(models, path=SNAPSHOT_FILE):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(models, f, indent=2)      # writes into file
 
 def main():
     try:
@@ -42,12 +49,25 @@ def main():
     except FetchError as err:
         print("Giving up:", err)
         return
+    
+    current = extract_models(payload)
+    if not current:
+        print("unexpected response shape, nothing saved")
+        return
+
+    previous = load_snapshot()
+    print("total count: ", len(current))
+    if not previous:
+        print("first run - saved a baseline to compare")
     else:
-        models = payload.get("data") if isinstance(payload, dict) else None
-        if not isinstance(models, list):
-            print("unexpected response shape")
+        new_ids = current.keys() - previous.keys()
+        if new_ids:
+            for model_id in sorted(new_ids):
+                print("NEW: ", model_id, current[model_id])
         else:
-            print("Request successful")
-            for m in models[:3]:
-                print(f"Name: {m.get('name', '?')}")
-            print("Total count:", len(models))
+            print("no new models")
+
+    save_snapshot(current)
+
+if __name__ == "__main__":
+    main()
